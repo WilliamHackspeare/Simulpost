@@ -1,0 +1,160 @@
+# Simulpost - Module Specifications
+
+This document outlines the specifications for the backend modules that will be imported by the front-end Gradio interface.
+
+## API Handlers Module (`api_handlers.py`)
+
+### Functions:
+
+1. `validate_api_keys(api_keys: Dict[str, str]) -> Dict[str, bool]`
+   - **Description**: Validates the API keys for each platform
+   - **Parameters**:
+     - `api_keys`: Dictionary mapping platform names to their API keys
+   - **Returns**: Dictionary mapping platform names to boolean values indicating if the key is valid
+   - **Example**:
+     ```python
+     result = validate_api_keys({
+         "X (Twitter)": "twitter_api_key_here",
+         "Threads": "threads_api_key_here"
+     })
+     # result = {"X (Twitter)": True, "Threads": False}
+     ```
+
+2. `save_api_keys(api_keys: Dict[str, str]) -> bool`
+   - **Description**: Securely saves the API keys for future use
+   - **Parameters**:
+     - `api_keys`: Dictionary mapping platform names to their API keys
+   - **Returns**: Boolean indicating success or failure
+   - **Security Note**: Implement proper encryption for storing sensitive API keys
+
+## Auth Handlers Module (`auth_handlers.py`)
+
+### Functions:
+
+1. `authorize_platform(platform: str, api_key: str) -> Dict[str, Any]`
+   - **Description**: Handles the OAuth flow or other authorization methods for a specific platform
+   - **Parameters**:
+     - `platform`: Name of the platform to authorize
+     - `api_key`: API key for the platform
+   - **Returns**: Dictionary containing:
+     - `success`: Boolean indicating if authorization was successful
+     - `auth_token`: Authorization token if successful
+     - `error`: Error message if unsuccessful
+     - `expires_at`: Expiration timestamp for the token
+   - **Example**:
+     ```python
+     result = authorize_platform("X (Twitter)", "twitter_api_key_here")
+     # result = {"success": True, "auth_token": "token_here", "expires_at": 1678901234}
+     ```
+
+2. `check_auth_status(platform: str) -> Dict[str, Any]`
+   - **Description**: Checks if the authorization for a platform is still valid
+   - **Parameters**:
+     - `platform`: Name of the platform to check
+   - **Returns**: Dictionary containing:
+     - `authorized`: Boolean indicating if the platform is authorized
+     - `expires_at`: Expiration timestamp for the token
+     - `needs_refresh`: Boolean indicating if the token needs to be refreshed
+
+3. `refresh_auth(platform: str) -> Dict[str, Any]`
+   - **Description**: Refreshes the authorization token for a platform
+   - **Parameters**:
+     - `platform`: Name of the platform to refresh
+   - **Returns**: Dictionary containing:
+     - `success`: Boolean indicating if refresh was successful
+     - `auth_token`: New authorization token if successful
+     - `error`: Error message if unsuccessful
+     - `expires_at`: New expiration timestamp for the token
+
+## Post Handlers Module (`post_handlers.py`)
+
+### Functions:
+
+1. `post_to_platforms(platforms: List[str], post_text: str, media_files: Optional[List[str]] = None) -> Dict[str, Dict[str, Any]]`
+   - **Description**: Posts content to multiple platforms
+   - **Parameters**:
+     - `platforms`: List of platform names to post to
+     - `post_text`: Text content of the post
+     - `media_files`: Optional list of paths to media files to include in the post
+   - **Returns**: Dictionary mapping platform names to result dictionaries containing:
+     - `success`: Boolean indicating if posting was successful
+     - `post_id`: ID of the post if successful
+     - `post_url`: URL of the post if successful
+     - `error`: Error message if unsuccessful
+   - **Example**:
+     ```python
+     results = post_to_platforms(
+         ["X (Twitter)", "Threads"],
+         "Hello world from Simulpost!",
+         ["image.jpg"]
+     )
+     # results = {
+     #     "X (Twitter)": {"success": True, "post_id": "123456", "post_url": "https://twitter.com/user/status/123456"},
+     #     "Threads": {"success": True, "post_id": "789012", "post_url": "https://threads.net/user/789012"}
+     # }
+     ```
+
+2. `format_post_for_platform(platform: str, post_text: str, max_length: Optional[int] = None) -> str`
+   - **Description**: Formats a post for a specific platform, considering character limits and platform-specific features
+   - **Parameters**:
+     - `platform`: Name of the platform to format for
+     - `post_text`: Original text content of the post
+     - `max_length`: Optional maximum length for the post
+   - **Returns**: Formatted post text
+
+## Platform-Specific Modules
+
+For each supported platform, create a dedicated module with the following functions:
+
+### X (Twitter) Module (`platforms/twitter.py`)
+
+1. `validate_api_key(api_key: str) -> bool`
+2. `authorize(api_key: str) -> Dict[str, Any]`
+3. `post(auth_token: str, post_text: str, media_files: Optional[List[str]] = None) -> Dict[str, Any]`
+
+### Threads Module (`platforms/threads.py`)
+
+1. `validate_api_key(api_key: str) -> bool`
+2. `authorize(api_key: str) -> Dict[str, Any]`
+3. `post(auth_token: str, post_text: str, media_files: Optional[List[str]] = None) -> Dict[str, Any]`
+
+### Bluesky Module (`platforms/bluesky.py`)
+
+1. `validate_api_key(api_key: str) -> bool`
+2. `authorize(api_key: str) -> Dict[str, Any]`
+3. `post(auth_token: str, post_text: str, media_files: Optional[List[str]] = None) -> Dict[str, Any]`
+
+### Mastodon Module (`platforms/mastodon.py`)
+
+1. `validate_api_key(api_key: str) -> bool`
+2. `authorize(api_key: str) -> Dict[str, Any]`
+3. `post(auth_token: str, post_text: str, media_files: Optional[List[str]] = None) -> Dict[str, Any]`
+
+### LinkedIn Module (`platforms/linkedin.py`)
+
+1. `validate_api_key(api_key: str) -> bool`
+2. `authorize(api_key: str) -> Dict[str, Any]`
+3. `post(auth_token: str, post_text: str, media_files: Optional[List[str]] = None) -> Dict[str, Any]`
+
+## Utility Module (`utils.py`)
+
+### Functions:
+
+1. `encrypt_data(data: str) -> str`
+   - **Description**: Encrypts sensitive data like API keys
+   - **Parameters**:
+     - `data`: String data to encrypt
+   - **Returns**: Encrypted string
+
+2. `decrypt_data(encrypted_data: str) -> str`
+   - **Description**: Decrypts encrypted data
+   - **Parameters**:
+     - `encrypted_data`: Encrypted string
+   - **Returns**: Decrypted string
+
+3. `validate_post_length(platform: str, post_text: str) -> bool`
+   - **Description**: Validates if a post is within the character limit for a platform
+   - **Parameters**:
+     - `platform`: Name of the platform
+     - `post_text`: Text content of the post
+   - **Returns**: Boolean indicating if the post is within the limit 
